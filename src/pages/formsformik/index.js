@@ -44,7 +44,8 @@ const validationSchema = yup.object().shape({
     .oneOf([yup.ref("password")], "password must match")
     .required("Required*"),
   gender: yup.string().required("Select any one option"),
-  interests: yup.bool().oneOf([true]).required("Required*"),
+  interests:yup.array().min(1,"select atleast one interest").required("Required*"),
+  birthdate:yup.date().required("Required*")
 });
 
 const Formsformik = () => {
@@ -80,12 +81,15 @@ const Formsformik = () => {
       component: "select",
     },
     {
-      name: ["reading", "sports", "games"],
+      name: "checked",
+      checkoption: ["reading", "sports", "games"],
       type: "checkbox",
+      component: "multi-select",
     },
     {
       name: "birthdate",
       type: "date",
+      component:"date-pick"
     },
   ];
 
@@ -93,16 +97,13 @@ const Formsformik = () => {
     console.log(values);
   };
 
-  const handleCheckbox = (e) => {
-    const { name, checked } = e.target;
-    let updateinterest = [...values.interests];
-    if (checked) {
-      updateinterest?.push(name);
-      console.log("updateinterests", updateinterest);
-    } else {
-      updateinterest = updateinterest.filter((interest) => interest !== name);
-    }
-    setFieldValue("interests", updateinterest);
+  const handleCheckbox = (e, interestoption) => {
+    const { checked } = e.target;
+    const updatedInterests = checked
+      ? [...values.interests, interestoption]
+      : values.interests.filter((interest) => interest !== interestoption);
+  
+    setFieldValue("interests", updatedInterests);
   };
   const formik = useFormik({
     initialValues: initialValues,
@@ -117,7 +118,8 @@ const Formsformik = () => {
     <div className="main-form-container">
       <form>
         <div className="forms-input-fields">
-          {objfield?.map((user, i) => {
+          {
+          objfield?.map((user, i) => {
             return (
               <>
                 {user.component === "input" && (
@@ -146,103 +148,78 @@ const Formsformik = () => {
                   <div className="muifields">
                     <InputLabel>Gender</InputLabel>
                     <Select
-                      name={objfield.name}
-                      value={values?.[objfield.name]}
+                      name={user.name}
+                      value={values?.[user.name]}
                       onChange={(e) =>
-                        setFieldValue(objfield.name, e.target.value)
+                        setFieldValue(user.name, e.target.value)
                       }
                       onBlur={(e) =>
-                        setTouched({ ...touched, [objfield?.name]: true })
+                        setTouched({ ...touched, [user?.name]: true })
                       }
                       style={{ width: "350px" }}
                     >
-                      {objfield?.options?.map((users) => (
+                      {user?.options?.map((users) => (
                         <MenuItem value={users}>{users}</MenuItem>
                       ))}
                     </Select>
-                    {touched?.[objfield?.name] && errors?.[objfield?.name] ? (
-                      <p>{errors?.[objfield?.name]}</p>
+                    {touched?.[user?.name] && errors?.[user?.name] ? (
+                      <p>{errors?.[user?.name]}</p>
                     ) : (
                       <p style={{ visibility: "hidden" }}>text</p>
                     )}
                   </div>
                 )}
-              </>
-            );
-          })}
-
-          <div className="muifields">
-            <InputLabel>Gender</InputLabel>
-            <Select
-              name={objfield.name}
-              value={values.gender}
-              onChange={(e) => setFieldValue("gender", e.target.value)}
-              onBlur={(e) => setTouched({ ...touched, confirmpass: true })}
-              style={{ width: "350px" }}
-            >
-              <MenuItem value="male">Male</MenuItem>
-              <MenuItem value="female">Female</MenuItem>
-              <MenuItem value="other">Other</MenuItem>
-            </Select>
-            {touched.gender && errors.gender ? (
-              <p>{errors.gender}</p>
-            ) : (
-              <p style={{ visibility: "hidden" }}>text</p>
-            )}
-          </div>
-          <div className="muifields">
-            <InputLabel>Interests</InputLabel>
-            <label>
-              <Checkbox
-                name="reading"
-                onChange={handleCheckbox}
-                onBlur={() => setTouched({ ...touched, checked: true })}
-                checked={values.interests.includes("reading")}
-              />
-              reading
-            </label>
-            <label>
-              <Checkbox
-                name="sports"
-                onChange={handleCheckbox}
-                onBlur={() => setTouched({ ...touched, checked: true })}
-                checked={values.interests.includes("sports")}
-              />
-              sports
-            </label>
-            <label>
-              <Checkbox
-                name="games"
-                onChange={handleCheckbox}
-                onBlur={() => setTouched({ ...touched, checked: true })}
-                checked={values.interests.includes("games")}
-              />
-              games
-            </label>
-            {touched.interests && errors.interests ? (
-              <p>{errors.interests}</p>
-            ) : (
-              <p style={{ visibility: "hidden" }}>text</p>
-            )}
-          </div>
-          <div className="muifields">
+                {user.component === "multi-select" && (
+                  <div className="muifields">
+                    <InputLabel>Interests</InputLabel>
+                    {user?.checkoption?.map((interestoption) => (
+                      <label key={interestoption}>
+                        <Checkbox
+                          name={interestoption}
+                          type={user?.type}
+                          onChange={(e)=>handleCheckbox(e, interestoption)}
+                          onBlur={() =>
+                            setTouched({ ...touched, [user.name]: true })
+                          }
+                          checked={values.interests.includes(interestoption)}
+                        />
+                        {interestoption}
+                      </label>
+                    ))}
+                    {
+                        touched?.[user?.name] && errors?.[user?.name]? user.name === "interests" (
+                        <p>{errors?.[user?.name]}</p>
+                      ) : (
+                        <p style={{ visibility: "hidden" }}>text</p>
+                      )
+                    }
+                  </div>
+                )}
+          {    
+            user.component === "date-pick" &&(
+              <div className="muifields">
             <InputLabel>Date of Birth</InputLabel>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                type="date"
-                name="birthdate"
-                value={values?.birthdate}
-                onChange={(date) => setFieldValue("birthdate", date)}
-                onBlur={() => setTouched({ ...touched, birthdate: true })}
+                type={user.type}
+                name={user?.name}
+                value={values?.[user?.name]}
+                onChange={(date) => setFieldValue(user.name, date)}
+                onBlur={() => setTouched({ ...touched, [user?.name]: true })}
                 sx={{ width: "350px" }}
               />
             </LocalizationProvider>
-            {touched.birthdate && errors.birthdate ? (
-              <p>{errors.birthdate}</p>
+            {touched?.[user?.name] && errors?.[user?.name] ? (
+              <p>{errors?.[user?.name]}</p>
             ) : (
               <p style={{ visibility: "hidden" }}>text</p>
             )}
           </div>
+            )}
+        </>
+      );
+    })
+    }  
           <div className="forms-btn">
             <Button variant="contained">Submit</Button>
           </div>
@@ -251,5 +228,4 @@ const Formsformik = () => {
     </div>
   );
 };
-
 export default Formsformik;
