@@ -1,4 +1,4 @@
-import React from "react";
+import React,{useState} from "react";
 import { MenuItem, TextField, Select, Button } from "@mui/material";
 import MuiPhoneNumber from "material-ui-phone-number";
 import { useFormik } from "formik";
@@ -83,10 +83,25 @@ const countries = [
 ];
 
 const Forms = () => {
+    const [enabled,setenabled] = useState(true);
+    const [stateEnabled , setstateEnabled]=useState();
+
   const handlecountries = (e) => {
-    setFieldValue("countries", e.target.value);
-    setFieldValue("states", "");
-    setFieldValue("cities", "");
+    // setFieldValue("countries", e.target.value);
+    // setFieldValue("states", "");
+    // setFieldValue("cities", "");
+   const countryid = e.target.value;
+    if(countryid != ''){
+      setFieldValue("countries", countryid);
+      setFieldValue("states", "");
+      setFieldValue("cities", "");
+      setenabled(false);
+      setstateEnabled(true);
+    }
+    else{
+    setenabled(true);
+    setstateEnabled(true);
+    }
   };
 
   const onSubmit = (values) => {
@@ -156,10 +171,18 @@ const Forms = () => {
               <Select
                 value={values.states}
                 onChange={(e) => {
+                  const stateid = e.target.value;
+                  if(stateid != ''){
                   setFieldValue("states", e.target.value);
                   setFieldValue("cities", "");
+                  setstateEnabled(false);
+                  }
+                  else{
+                    setstateEnabled(true);
+                  }
                 }}
                 onBlur={()=>setTouched({...touched,states:true})}
+                disabled={enabled}
                 sx={{ width: "100%" }}
               >
                 <MenuItem>States</MenuItem>
@@ -182,6 +205,7 @@ const Forms = () => {
                   setFieldValue("cities", e.target.value);
                 }}
                 onBlur={()=>setTouched({...touched,cities:true})}
+                disabled={stateEnabled}
                 sx={{ width: "100%" }}
               >
                 <MenuItem>Cities</MenuItem>
